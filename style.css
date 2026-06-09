@@ -1,0 +1,224 @@
+/* --- RESET HỆ THỐNG TOÀN DIỆN CHO IOS --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body, html {
+    height: 100%;
+    background-color: #212121;
+    color: #ececf1;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+}
+
+#app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 800px; /* Bóp gọn khung nhìn lại một chút cho chuẩn tỉ lệ ChatGPT */
+    margin: 0 auto;
+    background-color: #212121;
+}
+
+/* --- THANH TIÊU ĐỀ (HEADER) --- */
+#header {
+    background-color: #171717;
+    padding: 16px;
+    text-align: center;
+    border-bottom: 1px solid #2f2f2f;
+    padding-top: calc(12px + env(safe-area-inset-top)); /* Chống tràn lên tai thỏ/thanh pin */
+}
+
+#header h2 {
+    font-size: 16px;
+    font-weight: 500;
+    color: #c5c5d2;
+    letter-spacing: 0.5px;
+}
+
+/* --- KHUNG CHAT CUỘN MƯỢT --- */
+#chat-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 20px;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* --- BONG BÓNG TIN NHẮN CHUẨN CHATGPT --- */
+.message {
+    max-width: 85%;
+    padding: 14px 18px;
+    margin-bottom: 20px;
+    font-size: 15px;
+    line-height: 1.6;
+    word-wrap: break-word;
+    clear: both;
+}
+
+/* Tin nhắn của Bạn (User) - Nằm bên phải, bo góc bầu */
+.message.user {
+    background-color: #2f2f2f;
+    color: #f9f9f9;
+    float: right;
+    border-radius: 20px;
+    border-bottom-right-radius: 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* Tin nhắn của AI (Bot) - Nằm bên trái, dạng chữ trần phẳng không viền */
+.message.bot {
+    background-color: transparent;
+    color: #ececf1;
+    float: left;
+    padding-left: 0;
+    width: 100%; /* Ép chiếm trọn chiều ngang để dễ căn lề các thẻ con */
+    max-width: 100%;
+}
+
+/* --- ĐỊNH DẠNG VĂN BẢN MARKDOWN (AI TRẢ LỜI) --- */
+.message.bot p {
+    margin-bottom: 14px;
+}
+
+/* Định dạng đầu mục chữ to rõ ràng */
+.message.bot h1, .message.bot h2, .message.bot h3 {
+    color: #ffffff;
+    margin: 18px 0 8px 0;
+    font-weight: 600;
+}
+.message.bot h1 { font-size: 1.4em; }
+.message.bot h2 { font-size: 1.2em; border-bottom: 1px solid #2f2f2f; padding-bottom: 4px; }
+.message.bot h3 { font-size: 1.05em; }
+
+/* Danh sách gạch đầu dòng */
+.message.bot ul, .message.bot ol {
+    margin-left: 24px;
+    margin-bottom: 14px;
+}
+.message.bot li {
+    margin-bottom: 6px;
+}
+
+/* Chữ in đậm */
+.message.bot strong {
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Code nằm giữa dòng chữ */
+.message.bot code {
+    background-color: #2f2f2f;
+    color: #f2777a;
+    padding: 3px 6px;
+    border-radius: 5px;
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+    font-size: 13.5px;
+}
+
+/* --- KHỐI CHỨA MÃ CODE DÀI (BẢN ĐẶC BIỆT) --- */
+.message.bot pre {
+    background-color: #0d0d0d;
+    border-radius: 8px;
+    margin: 16px 0;
+    border: 1px solid #2f2f2f;
+    overflow: hidden; /* Cắt góc gọn gàng */
+}
+
+/* Tạo thanh tiêu đề giả lập cho hộp Code */
+.message.bot pre::before {
+    content: "Code";
+    display: block;
+    background-color: #202123;
+    color: #b4b4b4;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-family: sans-serif;
+    border-bottom: 1px solid #2f2f2f;
+    font-weight: 500;
+}
+
+/* Đoạn code bên trong hộp */
+.message.bot pre code {
+    display: block;
+    background-color: transparent;
+    color: #e5c07b; /* Màu vàng cam lập trình dễ nhìn */
+    padding: 16px;
+    overflow-x: auto; /* Vuốt ngang nếu code dài */
+    white-space: pre;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* --- THANH NHẬP LIỆU GỌN GÀNG (BÁM ĐÁY) --- */
+#input-area {
+    background-color: #212121;
+    padding: 12px 20px;
+    border-top: 1px solid #2f2f2f;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    background-color: #2f2f2f;
+    border-radius: 26px;
+    padding: 4px 12px;
+    border: 1px solid #3e3f4b;
+}
+
+#user-input {
+    flex: 1;
+    background: none;
+    border: none;
+    color: #fff;
+    padding: 12px;
+    font-size: 15px;
+    outline: none;
+}
+
+/* Giữ cho chữ trong ô nhập không bị mờ trên iOS */
+#user-input::placeholder {
+    color: #8e8ea0;
+}
+
+#upload-btn, #send-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+}
+
+#upload-btn {
+    font-size: 20px;
+    color: #b4b4b4;
+}
+
+#send-btn {
+    color: #10a37f; /* Màu xanh lá đặc trưng */
+    font-weight: 600;
+    font-size: 15px;
+    padding-right: 10px;
+}
+
+/* Xem trước ảnh */
+#preview-container {
+    padding: 10px 16px 0 16px;
+    font-size: 13px;
+    color: #10a37f;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#remove-img-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ff4a4a;
+    font-weight: bold;
+}
