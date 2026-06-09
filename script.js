@@ -37,6 +37,56 @@ var chatHistory = [];
 var selectedImageBase64 = null;
 var selectedImageMimeType = "";
 
+// --- DYNAMIC RESPONSE LENGTH DETECTION ---
+function detectQuestionComplexity(userText) {
+    var complexity = 0;
+    var text = userText.toLowerCase();
+    
+    // Từ khóa tìm kiếm chi tiết
+    var complexityKeywords = [
+        'why', 'tại sao', 'cách', 'implement', 'thiết kế', 'kiến trúc',
+        'giải thích', 'explain', 'detailed', 'chi tiết', 'phân tích', 'analyse',
+        'so sánh', 'compare', 'khác', 'difference', 'list', 'danh sách',
+        'tutorial', 'guide', 'hướng dẫn', 'step', 'từng bước', 'làm sao'
+    ];
+    
+    // Kiểm tra từ khóa
+    for (var i = 0; i < complexityKeywords.length; i++) {
+        if (text.indexOf(complexityKeywords[i]) !== -1) {
+            complexity++;
+        }
+    }
+    
+    // Độ dài câu hỏi
+    if (userText.length > 100) complexity++;
+    if (userText.length > 200) complexity++;
+    
+    // Số dấu hỏi
+    var questionMarks = (userText.match(/\?/g) || []).length;
+    if (questionMarks > 1) complexity += questionMarks - 1;
+    
+    // Có code không
+    if (text.indexOf('code') !== -1 || userText.indexOf('{') !== -1) {
+        complexity += 2;
+    }
+    
+    return complexity;
+}
+
+function getMaxTokensForQuestion(userText) {
+    var complexity = detectQuestionComplexity(userText);
+    
+    if (complexity === 0) {
+        return 512; // Simple question → short answer
+    } else if (complexity === 1) {
+        return 1024; // Medium question → normal answer
+    } else if (complexity >= 2 && complexity < 5) {
+        return 2048; // Complex question → detailed answer
+    } else {
+        return 4096; // Very complex → maximum detail
+    }
+}
+
 // Khai báo các phần tử giao diện (khởi tạo sau khi DOM load)
 var chatContainer;
 var userInput;
@@ -323,6 +373,9 @@ function sendMessage() {
     chatHistory.push({ role: "user", parts: currentParts });
     saveHistoryToStorage(); // Auto-save history
     
+    // Lưu text để detect complexity cho maxOutputTokens
+    lastUserText = text;
+    
     // Tiến hành gọi API
     callGeminiAPI();
     clearSelectedImage();
@@ -333,6 +386,7 @@ var apiRetryCount = 0;
 var maxRetries = 2;
 var lastAPICallTime = 0;
 var minTimeBetweenCalls = 2000; // 2 giây giữa các call
+var lastUserText = ""; // Lưu câu hỏi cuối cùng để detect complexity
 
 function callGeminiAPI() {
     // Rate limiting: chờ tối thiểu 2 giây giữa các calls
@@ -423,12 +477,16 @@ function callGeminiAPI() {
         contents: chatHistory,
         systemInstruction: {
             parts: [{
-                text: "You are a helpful AI assistant. Provide complete, well-structured answers. If your response would be very long, organize it with clear sections and bullet points. Always end responses naturally - never leave incomplete sentences or abrupt endings."
+                text: "You are a helpful AI assistant. Adapt your response length to the question complexity: " +
+                      "- Simple questions (greeting, basic facts) → concise answers (1-2 sentences). " +
+                      "- Medium questions → normal structured answers with bullet points. " +
+                      "- Complex questions (why, how, implement, analyze) → detailed comprehensive answers. " +
+                      "Always organize responses clearly and end naturally."
             }]
         },
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 4096 // Increased for longer, more detailed responses
+            maxOutputTokens: getMaxTokensForQuestion(lastUserText) // Dynamic based on question complexity
         }
     });
     
