@@ -1,6 +1,6 @@
 // --- CẤU HÌNH API GOOGLE FREE ---
 var GEMINI_API_KEY = "AIzaSyB_V4o2dnQ8eUITYEq63O2p0RoKetK2-os";
-var MODEL_NAME = "gemini-3.5-flash"; // Bản ổn định, miễn phí, hỗ trợ Vision và Context lớn
+var MODEL_NAME = "gemini-2.5-flash"; // Bản ổn định, miễn phí, hỗ trợ Vision và Context lớn
 
 // Hệ thống lưu trữ lịch sử cuộc hội thoại (Mảng thuần túy tương thích máy cũ)
 var chatHistory = [];
