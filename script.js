@@ -14,7 +14,7 @@ if (typeof API_CONFIG === 'undefined') {
 }
 
 var GEMINI_API_KEY = API_CONFIG.GEMINI_API_KEY;
-var MODEL_NAME = API_CONFIG.MODEL_NAME || "gemini-3.5-flash"; // Bản ổn định, miễn phí, hỗ trợ Vision và Context lớn
+var MODEL_NAME = API_CONFIG.MODEL_NAME || "gemini-2.0-flash"; // Gemini 2.0: Knowledge 2026, faster response
 
 // Hệ thống lưu trữ lịch sử cuộc hội thoại (Mảng thuần túy tương thích máy cũ)
 var chatHistory = [];
