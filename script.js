@@ -472,28 +472,62 @@ function parseSimpleMarkdown(text) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
     
-    // Chuyển dòng mới thành <br>
+    // === CODE BLOCKS (must be before line breaks) ===
+    text = text.replace(/```(.*?)\n([\s\S]*?)```/g, function(match, lang, code) {
+        var langClass = lang ? ' class="lang-' + lang.trim() + '"' : '';
+        return '<pre><code' + langClass + '>' + code.trim() + '</code></pre>';
+    });
+    
+    // === HORIZONTAL DIVIDERS ===
+    text = text.replace(/^\*\*\*\s*$/gm, '<div class="divider"></div>');
+    text = text.replace(/^---\s*$/gm, '<div class="divider"></div>');
+    
+    // === LINE BREAKS ===
     text = text.replace(/\n/g, '<br>');
     
-    // Bold: **text** hoặc __text__
+    // === BLOCKQUOTES (> text) ===
+    text = text.replace(/^&gt;\s+(.+?)$/gm, '<blockquote>$1</blockquote>');
+    
+    // === BOLD: **text** hoặc __text__ ===
     text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/__(.+?)__/g, '<strong>$1</strong>');
     
-    // Italic: *text* hoặc _text_
-    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    text = text.replace(/_(.+?)_/g, '<em>$1</em>');
+    // === ITALIC: *text* hoặc _text_ ===
+    // Note: Cẩn thận không match ** hoặc __ được match lại
+    text = text.replace(/\*([^\*]+?)\*/g, function(match, content) {
+        if (match.includes('**')) return match;
+        return '<em>' + content + '</em>';
+    });
+    text = text.replace(/_([^_]+?)_/g, function(match, content) {
+        if (match.includes('__')) return match;
+        return '<em>' + content + '</em>';
+    });
     
-    // Code inline: `code`
-    text = text.replace(/`(.+?)`/g, '<code>$1</code>');
+    // === INLINE CODE: `code` ===
+    text = text.replace(/`([^`]+?)`/g, '<code>$1</code>');
     
-    // Headings: # Heading, ## Heading, etc
+    // === HEADINGS ===
     text = text.replace(/^### (.+?)$/gm, '<h3>$1</h3>');
     text = text.replace(/^## (.+?)$/gm, '<h2>$1</h2>');
     text = text.replace(/^# (.+?)$/gm, '<h1>$1</h1>');
     
-    // Lists: - item hoặc * item
+    // === NUMBERED LISTS (1. item, 2. item) ===
+    text = text.replace(/^\d+\.\s+(.+?)$/gm, '<li class="numbered">$1</li>');
+    
+    // === BULLET LISTS (- item hoặc * item) ===
     text = text.replace(/^\s*[-*]\s+(.+?)$/gm, '<li>$1</li>');
-    text = text.replace(/(<li>.+?<\/li>)/s, '<ul>$1</ul>');
+    
+    // === WRAP LISTS IN UL/OL ===
+    text = text.replace(/(<li[^>]*>.+?<\/li>)/s, function(match) {
+        if (match.includes('class="numbered"')) {
+            return '<ol>' + match + '</ol>';
+        } else {
+            return '<ul>' + match + '</ul>';
+        }
+    });
+    
+    // === LINKS [text](url) ===
+    text = text.replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, '<a href="$2" target="_blank">$1</a>');
     
     return text;
 }

@@ -294,3 +294,90 @@ body, html {
     color: #ff4a4a;
     font-weight: bold;
 }
+
+/* --- BLOCKQUOTES (đánh dấu trích dẫn) --- */
+.message.bot blockquote {
+    border-left: 3px solid #10a37f;
+    padding-left: 12px;
+    margin: 12px 0;
+    color: #b4b4b4;
+    font-style: italic;
+    background-color: rgba(16, 163, 127, 0.08);
+    padding: 8px 12px;
+    border-radius: 4px;
+    clear: both;
+}
+
+/* --- DIVIDERS (thanh phân cách ngang) --- */
+.message.bot .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    margin: 20px 0;
+    clear: both;
+}
+
+/* --- NUMBERED LISTS (styling riêng) --- */
+.message.bot li.numbered {
+    list-style-type: decimal;
+    margin-left: 8px;
+}
+
+.message.bot ol li.numbered {
+    margin-bottom: 10px;
+}
+
+/* --- BULLET LISTS (styling nâng cao) --- */
+.message.bot ul li {
+    list-style-type: disc;
+    margin-left: 4px;
+}
+
+/* --- LINKS (dễ nhận biết) --- */
+.message.bot a {
+    color: #10a37f;
+    text-decoration: underline;
+    word-break: break-all;
+    transition: opacity 0.2s;
+}
+
+.message.bot a:active {
+    opacity: 0.7;
+}
+
+/* --- LANGUAGE TAG TRONG CODE BLOCKS --- */
+.message.bot pre code.lang-java,
+.message.bot pre code.lang-python,
+.message.bot pre code.lang-javascript,
+.message.bot pre code.lang-html,
+.message.bot pre code.lang-css,
+.message.bot pre code.lang-sql {
+    display: block;
+}
+
+/* --- OPTIMIZE CHO IPAD AIR 1 (1GB RAM) --- */
+@media (max-width: 768px) {
+    .message {
+        max-width: 90%;
+        font-size: 14px;
+        padding: 12px 16px;
+    }
+    
+    .message.bot {
+        padding-left: 0;
+    }
+    
+    .message.bot pre code {
+        font-size: 11px;
+        padding: 10px;
+    }
+    
+    .message.bot ul, .message.bot ol {
+        margin-left: 20px;
+    }
+}
+
+/* --- SMOOTH SCROLLING VỚI HARDWARE ACCELERATION --- */
+#chat-container {
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
+}
