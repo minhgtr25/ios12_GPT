@@ -412,7 +412,7 @@ function callGeminiAPI() {
         contents: chatHistory,
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 512 // Reduced from 1024 to reduce API load and avoid rate limits
+            maxOutputTokens: 2048 // Increased for longer, more detailed responses
         }
     });
     
