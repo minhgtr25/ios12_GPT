@@ -2,29 +2,40 @@
 // ⚠️ HƯỚNG DẪN: Tạo file 'config.js' từ 'config.js.example' và thêm API key của bạn
 // Lấy API key từ: https://ai.google.dev/
 
-// Kiểm tra xem config.js đã được cấu hình chưa
-if (typeof API_CONFIG === 'undefined') {
-    alert('⚠️ Lỗi: Bạn chưa cấu hình API key!\n\n' +
-          'Hướng dẫn:\n' +
-          '1. Copy file "config.js.example" thành "config.js"\n' +
-          '2. Mở "config.js" và thay thế "your_gemini_api_key_here" bằng API key thực của bạn\n' +
-          '3. Lấy API key tại: https://ai.google.dev/\n' +
-          '4. Tải lại trang này');
-    throw new Error('API_CONFIG chưa được cấu hình. Xem hướng dẫn trong console.');
+// Constants cho localStorage (define trước để dùng trong API key check)
+var STORAGE_PREFIX = "ios12_gpt_";
+var STORAGE_HISTORY = STORAGE_PREFIX + "history";
+var STORAGE_MODEL = STORAGE_PREFIX + "model";
+
+var GEMINI_API_KEY;
+var MODEL_NAME;
+
+// Try loading from config.js (localhost)
+if (typeof API_CONFIG !== 'undefined') {
+    GEMINI_API_KEY = API_CONFIG.GEMINI_API_KEY;
+    MODEL_NAME = API_CONFIG.MODEL_NAME || "gemini-3.5-flash";
+} else {
+    // Try loading from localStorage (Vercel deployment)
+    GEMINI_API_KEY = localStorage.getItem(STORAGE_PREFIX + "api_key");
+    MODEL_NAME = localStorage.getItem(STORAGE_PREFIX + "model") || "gemini-3.5-flash";
 }
 
-var GEMINI_API_KEY = API_CONFIG.GEMINI_API_KEY;
-var MODEL_NAME = API_CONFIG.MODEL_NAME || "gemini-3.5-flash"; // Default model
+// If still no key, ask user to input
+if (!GEMINI_API_KEY) {
+    var userKey = prompt('⚠️ API key chưa được cấu hình!\n\nPaste Gemini API key từ https://ai.google.dev/\n\nVD: AIza...');
+    if (userKey && userKey.trim()) {
+        GEMINI_API_KEY = userKey.trim();
+        localStorage.setItem(STORAGE_PREFIX + "api_key", GEMINI_API_KEY);
+    } else {
+        alert('❌ API key required. Cannot continue.');
+        throw new Error('API_CONFIG missing and user cancelled input.');
+    }
+}
 
 // Hệ thống lưu trữ lịch sử cuộc hội thoại (Mảng thuần túy tương thích máy cũ)
 var chatHistory = [];
 var selectedImageBase64 = null;
 var selectedImageMimeType = "";
-
-// Constants cho localStorage
-var STORAGE_PREFIX = "ios12_gpt_";
-var STORAGE_HISTORY = STORAGE_PREFIX + "history";
-var STORAGE_MODEL = STORAGE_PREFIX + "model";
 
 // Khai báo các phần tử giao diện (khởi tạo sau khi DOM load)
 var chatContainer;
@@ -410,6 +421,11 @@ function callGeminiAPI() {
 
     var body = JSON.stringify({
         contents: chatHistory,
+        systemInstruction: {
+            parts: [{
+                text: "You are a helpful AI assistant. Provide complete, well-structured answers. If your response would be very long, organize it with clear sections and bullet points. Always end responses naturally - never leave incomplete sentences or abrupt endings."
+            }]
+        },
         generationConfig: {
             temperature: 0.7,
             maxOutputTokens: 2048 // Increased for longer, more detailed responses
