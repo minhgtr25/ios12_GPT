@@ -115,7 +115,24 @@ function sendMessage() {
     clearSelectedImage();
 }
 
+// Biến kiểm soát retry (tránh gọi API liên tục)
+var apiRetryCount = 0;
+var maxRetries = 2;
+var lastAPICallTime = 0;
+var minTimeBetweenCalls = 2000; // 2 giây giữa các call
+
 function callGeminiAPI() {
+    // Rate limiting: chờ tối thiểu 2 giây giữa các calls
+    var timeSinceLastCall = Date.now() - lastAPICallTime;
+    if (timeSinceLastCall < minTimeBetweenCalls) {
+        var waitTime = Math.ceil((minTimeBetweenCalls - timeSinceLastCall) / 1000);
+        appendMessage("⏳ Chờ " + waitTime + "s để tránh quá tải...", 'bot');
+        setTimeout(callGeminiAPI, minTimeBetweenCalls - timeSinceLastCall);
+        return;
+    }
+    
+    lastAPICallTime = Date.now();
+    
     var xhr = new XMLHttpRequest();
     var url = "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL_NAME + ":generateContent?key=" + GEMINI_API_KEY;
 
@@ -134,6 +151,7 @@ function callGeminiAPI() {
             }
 
             if (xhr.status === 200) {
+                apiRetryCount = 0; // Reset retry counter on success
                 var response = JSON.parse(xhr.responseText);
                 var aiResponseText = response.candidates[0].content.parts[0].text;
                 
@@ -150,13 +168,38 @@ function callGeminiAPI() {
                 if (chatHistory.length > 20) {
                     chatHistory.shift();
                 }
+            } else if (xhr.status === 429) {
+                // Rate limit - retry sau 5 giây
+                if (apiRetryCount < maxRetries) {
+                    apiRetryCount++;
+                    var waitSeconds = 5 * apiRetryCount; // 5s, 10s, 15s
+                    appendMessage("⚠️ API quá tải (429). Thử lại sau " + waitSeconds + "s...", 'bot');
+                    setTimeout(function() {
+                        // Xóa tin nhắn thử lại và gọi lại
+                        var retryMsg = document.querySelectorAll('.message.bot');
+                        if (retryMsg.length > 0) {
+                            retryMsg[retryMsg.length - 1].remove();
+                        }
+                        callGeminiAPI();
+                    }, waitSeconds * 1000);
+                } else {
+                    appendMessage("❌ Lỗi 429: API quá tải. Hãy chờ 10 phút rồi thử lại.", 'bot');
+                    apiRetryCount = 0;
+                    chatHistory.pop();
+                }
             } else {
                 // Báo lỗi chi tiết thẳng lên màn hình iPad nếu có sự cố
-                var errorText = "Lỗi kết nối.\n" +
-                                "- Mã Status: " + xhr.status + "\n" +
-                                "(Nếu Status bằng 0: Do Firewall chặn hoặc do Safari chặn đẩy dữ liệu từ http sang https. Hãy đưa lên Vercel để sửa dứt điểm lỗi này).";
+                var errorText = "❌ Lỗi kết nối.\n" +
+                                "Mã: " + xhr.status + "\n";
+                if (xhr.status === 0) {
+                    errorText += "(Firewall chặn hoặc HTTPS issue)";
+                } else if (xhr.status === 403) {
+                    errorText += "(API key không hợp lệ)";
+                } else if (xhr.status === 500) {
+                    errorText += "(Lỗi server Google)";
+                }
                 appendMessage(errorText, 'bot');
-                chatHistory.pop(); // Gỡ lượt gửi lỗi khỏi hàng đợi lịch sử
+                chatHistory.pop();
             }
         }
     };
@@ -165,7 +208,7 @@ function callGeminiAPI() {
         contents: chatHistory,
         generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 1024 // Giới hạn token đầu ra ngắn hơn một chút để máy cũ xử lý chuỗi nhanh hơn
+            maxOutputTokens: 512 // Reduced from 1024 to reduce API load and avoid rate limits
         }
     });
     
