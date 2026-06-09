@@ -487,7 +487,12 @@ function callGeminiAPI() {
         generationConfig: {
             temperature: 0.7,
             maxOutputTokens: getMaxTokensForQuestion(lastUserText) // Dynamic based on question complexity
-        }
+        },
+        tools: [
+            {
+                googleSearch: {}
+            }
+        ]
     });
     
     xhr.send(body);
