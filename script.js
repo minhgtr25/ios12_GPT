@@ -21,27 +21,59 @@ var chatHistory = [];
 var selectedImageBase64 = null;
 var selectedImageMimeType = "";
 
-// Lấy các phần tử giao diện
-var chatContainer = document.getElementById('chat-container');
-var userInput = document.getElementById('user-input');
-var sendBtn = document.getElementById('send-btn');
-var fileInput = document.getElementById('file-input');
-var previewContainer = document.getElementById('preview-container');
+// Khai báo các phần tử giao diện (khởi tạo sau khi DOM load)
+var chatContainer;
+var userInput;
+var sendBtn;
+var fileInput;
+var previewContainer;
 
-// Xử lý khi chọn ảnh để upload
-fileInput.onchange = function (e) {
-    var file = e.target.files[0];
-    if (!file) return;
-    
-    selectedImageMimeType = file.type;
-    var reader = new FileReader();
-    reader.onload = function (event) {
-        // Cắt bỏ phần đầu định dạng chuỗi base64 bọc ngoài
-        selectedImageBase64 = event.target.result.split(',')[1];
-        previewContainer.style.display = "flex";
-    };
-    reader.readAsDataURL(file);
-};
+// Hàm khởi tạo ứng dụng - gọi sau khi DOM load xong
+function initializeApp() {
+    // Lấy các phần tử giao diện
+    chatContainer = document.getElementById('chat-container');
+    userInput = document.getElementById('user-input');
+    sendBtn = document.getElementById('send-btn');
+    fileInput = document.getElementById('file-input');
+    previewContainer = document.getElementById('preview-container');
+
+    // Xử lý khi chọn ảnh để upload
+    if (fileInput) {
+        fileInput.onchange = function (e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            
+            selectedImageMimeType = file.type;
+            var reader = new FileReader();
+            reader.onload = function (event) {
+                // Cắt bỏ phần đầu định dạng chuỗi base64 bọc ngoài
+                selectedImageBase64 = event.target.result.split(',')[1];
+                previewContainer.style.display = "flex";
+            };
+            reader.readAsDataURL(file);
+        };
+    }
+
+    // Gán sự kiện click cho nút gửi
+    if (sendBtn) {
+        sendBtn.onclick = sendMessage;
+    }
+
+    // Gán sự kiện enter cho input
+    if (userInput) {
+        userInput.onkeypress = function (e) {
+            if (e.key === 'Enter') sendMessage();
+        };
+    }
+}
+
+// Chờ DOM load xong rồi khởi tạo ứng dụng
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    // Nếu DOM đã load rồi (ít xảy ra) thì khởi tạo ngay
+    initializeApp();
+}
 
 // Hàm hủy chọn ảnh
 function clearSelectedImage() {
@@ -174,9 +206,3 @@ function appendMessage(text, side) {
     
     return uniqueId;
 }
-
-// Bắt các sự kiện click nút và nhấn nút Enter trên bàn phím iPad
-userInput.onkeypress = function (e) {
-    if (e.keyCode === 13) sendMessage();
-};
-sendBtn.onclick = sendMessage;
