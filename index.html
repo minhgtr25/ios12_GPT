@@ -24,11 +24,25 @@
 
     <div id="app-container">
         <div id="header">
-            <h2>Gemini 2.5 Flash</h2>
+            <div id="header-top">
+                <h2>Gemini AI Chat</h2>
+                <div id="header-controls">
+                    <select id="model-selector" title="Chọn AI Model">
+                        <option value="gemini-2.5-flash">2.5-Flash</option>
+                        <option value="gemini-3.5-flash">3.5-Flash</option>
+                        <option value="gemini-2.0-flash">2.0-Flash</option>
+                    </select>
+                </div>
+            </div>
+            <div id="header-actions">
+                <button id="export-btn" title="Xuất lịch sử chat">💾 Xuất</button>
+                <button id="import-btn" title="Nhập lịch sử chat">📂 Nhập</button>
+                <button id="clear-btn" title="Xóa lịch sử chat">🗑️ Xóa</button>
+            </div>
         </div>
 
         <div id="chat-container">
-            <div class="message bot">Xin chào! Tôi đã được nâng cấp trình hiển thị. Giờ đây các đoạn văn bản có tiêu đề, danh sách hay các đoạn mã code sẽ được tự động định dạng cho bạn dễ nhìn nhất!</div>
+            <div class="message bot">Xin chào! Chọn model AI ở trên để bắt đầu. History chat sẽ được lưu tự động.</div>
         </div>
 
         <div id="input-area">
@@ -44,6 +58,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="import-file-input" accept=".json" style="display:none;">
 
     <script src="script.js"></script>
 </body>

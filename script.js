@@ -14,12 +14,17 @@ if (typeof API_CONFIG === 'undefined') {
 }
 
 var GEMINI_API_KEY = API_CONFIG.GEMINI_API_KEY;
-var MODEL_NAME = API_CONFIG.MODEL_NAME || "gemini-2.0-flash"; // Gemini 2.0: Knowledge 2026, faster response
+var MODEL_NAME = API_CONFIG.MODEL_NAME || "gemini-3.5-flash"; // Default model
 
 // Hệ thống lưu trữ lịch sử cuộc hội thoại (Mảng thuần túy tương thích máy cũ)
 var chatHistory = [];
 var selectedImageBase64 = null;
 var selectedImageMimeType = "";
+
+// Constants cho localStorage
+var STORAGE_PREFIX = "ios12_gpt_";
+var STORAGE_HISTORY = STORAGE_PREFIX + "history";
+var STORAGE_MODEL = STORAGE_PREFIX + "model";
 
 // Khai báo các phần tử giao diện (khởi tạo sau khi DOM load)
 var chatContainer;
@@ -27,6 +32,113 @@ var userInput;
 var sendBtn;
 var fileInput;
 var previewContainer;
+var modelSelector;
+var exportBtn;
+var importBtn;
+var clearBtn;
+
+// ===== LOCAL STORAGE FUNCTIONS =====
+
+// Lưu history vào localStorage
+function saveHistoryToStorage() {
+    try {
+        var historyStr = JSON.stringify(chatHistory);
+        localStorage.setItem(STORAGE_HISTORY, historyStr);
+    } catch (e) {
+        // Quota exceeded hoặc disabled
+        console.warn("Cannot save to localStorage:", e);
+    }
+}
+
+// Load history từ localStorage
+function loadHistoryFromStorage() {
+    try {
+        var historyStr = localStorage.getItem(STORAGE_HISTORY);
+        if (historyStr) {
+            chatHistory = JSON.parse(historyStr);
+            return true;
+        }
+    } catch (e) {
+        console.warn("Cannot load from localStorage:", e);
+    }
+    return false;
+}
+
+// Lưu model choice vào localStorage
+function saveModelToStorage(modelName) {
+    try {
+        localStorage.setItem(STORAGE_MODEL, modelName);
+    } catch (e) {
+        console.warn("Cannot save model to localStorage:", e);
+    }
+}
+
+// Load model choice từ localStorage
+function loadModelFromStorage() {
+    try {
+        return localStorage.getItem(STORAGE_MODEL);
+    } catch (e) {
+        console.warn("Cannot load model from localStorage:", e);
+    }
+    return null;
+}
+
+// Export history as JSON file
+function exportHistory() {
+    try {
+        var data = {
+            timestamp: new Date().toISOString(),
+            model: MODEL_NAME,
+            history: chatHistory
+        };
+        var json = JSON.stringify(data, null, 2);
+        var blob = new Blob([json], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        
+        // Create download link
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'chat_history_' + new Date().getTime() + '.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        appendMessage("✅ Đã xuất lịch sử chat", 'bot');
+    } catch (e) {
+        appendMessage("❌ Lỗi xuất file: " + e.message, 'bot');
+    }
+}
+
+// Import history from JSON file
+function importHistory() {
+    var importInput = document.getElementById('import-file-input');
+    if (importInput) {
+        importInput.click();
+    }
+}
+
+// Clear all history
+function clearHistory() {
+    if (confirm('Bạn chắc chắn muốn xóa toàn bộ lịch sử chat? Hành động này không thể hoàn tác.')) {
+        chatHistory = [];
+        localStorage.removeItem(STORAGE_HISTORY);
+        
+        // Clear chat display
+        while (chatContainer.firstChild) {
+            chatContainer.removeChild(chatContainer.firstChild);
+        }
+        
+        appendMessage("✅ Đã xóa lịch sử chat", 'bot');
+    }
+}
+
+// Change model
+function changeModel(newModel) {
+    MODEL_NAME = newModel;
+    saveModelToStorage(newModel);
+    appendMessage("✅ Đã chuyển model sang: " + newModel, 'bot');
+}
 
 // Hàm khởi tạo ứng dụng - gọi sau khi DOM load xong
 function initializeApp() {
@@ -36,6 +148,35 @@ function initializeApp() {
     sendBtn = document.getElementById('send-btn');
     fileInput = document.getElementById('file-input');
     previewContainer = document.getElementById('preview-container');
+    modelSelector = document.getElementById('model-selector');
+    exportBtn = document.getElementById('export-btn');
+    importBtn = document.getElementById('import-btn');
+    clearBtn = document.getElementById('clear-btn');
+
+    // Load saved model or use default
+    var savedModel = loadModelFromStorage();
+    if (savedModel) {
+        MODEL_NAME = savedModel;
+        if (modelSelector) {
+            modelSelector.value = savedModel;
+        }
+    } else if (modelSelector) {
+        modelSelector.value = MODEL_NAME;
+    }
+
+    // Load chat history from localStorage
+    var loaded = loadHistoryFromStorage();
+    if (loaded && chatHistory.length > 0) {
+        // Replay history to display
+        for (var i = 0; i < chatHistory.length; i++) {
+            var msg = chatHistory[i];
+            if (msg.parts && msg.parts.length > 0) {
+                var text = msg.parts[0].text || "(image)";
+                var side = msg.role === "user" ? "user" : "bot";
+                appendMessage(text, side);
+            }
+        }
+    }
 
     // Xử lý khi chọn ảnh để upload
     if (fileInput) {
@@ -63,6 +204,66 @@ function initializeApp() {
     if (userInput) {
         userInput.onkeypress = function (e) {
             if (e.key === 'Enter') sendMessage();
+        };
+    }
+
+    // Model selector handler
+    if (modelSelector) {
+        modelSelector.onchange = function (e) {
+            changeModel(e.target.value);
+        };
+    }
+
+    // Export button handler
+    if (exportBtn) {
+        exportBtn.onclick = exportHistory;
+    }
+
+    // Import button handler
+    if (importBtn) {
+        importBtn.onclick = importHistory;
+    }
+
+    // Clear button handler
+    if (clearBtn) {
+        clearBtn.onclick = clearHistory;
+    }
+
+    // Import file input handler
+    var importInput = document.getElementById('import-file-input');
+    if (importInput) {
+        importInput.onchange = function (e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            
+            var reader = new FileReader();
+            reader.onload = function (event) {
+                try {
+                    var data = JSON.parse(event.target.result);
+                    chatHistory = data.history || [];
+                    saveHistoryToStorage();
+                    
+                    // Clear and reload display
+                    while (chatContainer.firstChild) {
+                        chatContainer.removeChild(chatContainer.firstChild);
+                    }
+                    
+                    // Replay history
+                    for (var i = 0; i < chatHistory.length; i++) {
+                        var msg = chatHistory[i];
+                        if (msg.parts && msg.parts.length > 0) {
+                            var text = msg.parts[0].text || "(image)";
+                            var side = msg.role === "user" ? "user" : "bot";
+                            appendMessage(text, side);
+                        }
+                    }
+                    
+                    appendMessage("✅ Đã nhập lịch sử chat (" + chatHistory.length + " tin nhắn)", 'bot');
+                } catch (err) {
+                    appendMessage("❌ Lỗi nhập file: " + err.message, 'bot');
+                }
+            };
+            reader.readAsText(file);
         };
     }
 }
@@ -109,6 +310,7 @@ function sendMessage() {
     }
 
     chatHistory.push({ role: "user", parts: currentParts });
+    saveHistoryToStorage(); // Auto-save history
     
     // Tiến hành gọi API
     callGeminiAPI();
@@ -168,6 +370,8 @@ function callGeminiAPI() {
                 if (chatHistory.length > 20) {
                     chatHistory.shift();
                 }
+                
+                saveHistoryToStorage(); // Auto-save history after bot response
             } else if (xhr.status === 429) {
                 // Rate limit - retry sau 5 giây
                 if (apiRetryCount < maxRetries) {
