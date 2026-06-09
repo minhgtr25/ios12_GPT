@@ -184,17 +184,9 @@ function appendMessage(text, side) {
     msgDiv.className = 'message ' + side;
     
     if (side === 'bot') {
-        // Đặt trong khối try-catch để phòng trường hợp thư viện Marked bị lỗi cú pháp trên iOS 12
-        try {
-            if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
-                msgDiv.innerHTML = marked.parse(text);
-            } else {
-                msgDiv.innerText = text;
-            }
-        } catch (e) {
-            // Nếu thư viện Marked crash, tự động hiển thị dạng chữ thô để giữ ứng dụng hoạt động ổn định
-            msgDiv.innerText = text;
-        }
+        // Trên iOS 12 + iPad cũ, chỉ dùng simple markdown formatting thay vì thư viện ngoài
+        // Tránh vấn đề innerHTML rendering trên Safari cũ
+        msgDiv.innerHTML = parseSimpleMarkdown(text);
     } else {
         msgDiv.innerText = text;
     }
@@ -205,4 +197,40 @@ function appendMessage(text, side) {
     chatContainer.scrollTop = chatContainer.scrollHeight;
     
     return uniqueId;
+}
+
+// Hàm parse markdown đơn giản - tương thích iOS 12
+function parseSimpleMarkdown(text) {
+    // Escape HTML để tránh injection
+    text = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    
+    // Chuyển dòng mới thành <br>
+    text = text.replace(/\n/g, '<br>');
+    
+    // Bold: **text** hoặc __text__
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    
+    // Italic: *text* hoặc _text_
+    text = text.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    text = text.replace(/_(.+?)_/g, '<em>$1</em>');
+    
+    // Code inline: `code`
+    text = text.replace(/`(.+?)`/g, '<code>$1</code>');
+    
+    // Headings: # Heading, ## Heading, etc
+    text = text.replace(/^### (.+?)$/gm, '<h3>$1</h3>');
+    text = text.replace(/^## (.+?)$/gm, '<h2>$1</h2>');
+    text = text.replace(/^# (.+?)$/gm, '<h1>$1</h1>');
+    
+    // Lists: - item hoặc * item
+    text = text.replace(/^\s*[-*]\s+(.+?)$/gm, '<li>$1</li>');
+    text = text.replace(/(<li>.+?<\/li>)/s, '<ul>$1</ul>');
+    
+    return text;
 }

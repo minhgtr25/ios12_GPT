@@ -88,20 +88,28 @@ body, html {
 /* Định dạng đầu mục chữ to rõ ràng */
 .message.bot h1, .message.bot h2, .message.bot h3 {
     color: #ffffff;
-    margin: 18px 0 8px 0;
+    margin: 16px 0 10px 0;
     font-weight: 600;
+    line-height: 1.4;
+    clear: both;
 }
-.message.bot h1 { font-size: 1.4em; }
-.message.bot h2 { font-size: 1.2em; border-bottom: 1px solid #2f2f2f; padding-bottom: 4px; }
+.message.bot h1 { font-size: 1.3em; margin-top: 20px; }
+.message.bot h2 { 
+    font-size: 1.15em; 
+    border-bottom: 1px solid rgba(255,255,255,0.1); 
+    padding-bottom: 6px; 
+}
 .message.bot h3 { font-size: 1.05em; }
 
 /* Danh sách gạch đầu dòng */
 .message.bot ul, .message.bot ol {
     margin-left: 24px;
     margin-bottom: 14px;
+    margin-top: 8px;
 }
 .message.bot li {
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    clear: both;
 }
 
 /* Chữ in đậm */
@@ -110,48 +118,56 @@ body, html {
     font-weight: 600;
 }
 
-/* Code nằm giữa dòng chữ */
+/* Chữ in nghiêng */
+.message.bot em {
+    color: #ececf1;
+    font-style: italic;
+}
+
+/* Code nằm giữa dòng chữ - TƯƠNG THÍCH iOS 12 */
 .message.bot code {
-    background-color: #2f2f2f;
+    background-color: rgba(255,255,255,0.1);
     color: #f2777a;
-    padding: 3px 6px;
-    border-radius: 5px;
+    padding: 2px 5px;
+    border-radius: 3px;
     font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
-    font-size: 13.5px;
+    font-size: 0.9em;
+    word-break: break-all;
 }
 
 /* --- KHỐI CHỨA MÃ CODE DÀI (BẢN ĐẶC BIỆT) --- */
 .message.bot pre {
     background-color: #0d0d0d;
-    border-radius: 8px;
-    margin: 16px 0;
+    border-radius: 6px;
+    margin: 14px 0;
     border: 1px solid #2f2f2f;
-    overflow: hidden; /* Cắt góc gọn gàng */
-}
-
-/* Tạo thanh tiêu đề giả lập cho hộp Code */
-.message.bot pre::before {
-    content: "Code";
-    display: block;
-    background-color: #202123;
-    color: #b4b4b4;
-    padding: 8px 16px;
-    font-size: 12px;
-    font-family: sans-serif;
-    border-bottom: 1px solid #2f2f2f;
-    font-weight: 500;
+    overflow: hidden;
+    clear: both;
 }
 
 /* Đoạn code bên trong hộp */
 .message.bot pre code {
     display: block;
     background-color: transparent;
-    color: #e5c07b; /* Màu vàng cam lập trình dễ nhìn */
-    padding: 16px;
-    overflow-x: auto; /* Vuốt ngang nếu code dài */
-    white-space: pre;
-    font-size: 13px;
+    color: #e5c07b;
+    padding: 12px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 12px;
     line-height: 1.5;
+}
+
+/* Phân tách khi code quá dài (tương thích iOS 12) */
+.message.bot pre {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* --- TƯƠNG THÍCH VỚI PLAIN TEXT KHÔNG CÓ MARKDOWN --- */
+.message.bot br {
+    display: block;
+    content: "";
+    margin: 0;
 }
 
 /* --- THANH NHẬP LIỆU GỌN GÀNG (BÁM ĐÁY) --- */
