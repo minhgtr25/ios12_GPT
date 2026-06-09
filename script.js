@@ -3,6 +3,15 @@
 // Lấy API key từ: https://ai.google.dev/
 
 // Kiểm tra xem config.js đã được cấu hình chưa
+if (typeof API_CONFIG === 'undefined') {
+    alert('⚠️ Lỗi: Bạn chưa cấu hình API key!\n\n' +
+          'Hướng dẫn:\n' +
+          '1. Copy file "config.js.example" thành "config.js"\n' +
+          '2. Mở "config.js" và thay thế "your_gemini_api_key_here" bằng API key thực của bạn\n' +
+          '3. Lấy API key tại: https://ai.google.dev/\n' +
+          '4. Tải lại trang này');
+    throw new Error('API_CONFIG chưa được cấu hình. Xem hướng dẫn trong console.');
+}
 
 var GEMINI_API_KEY = API_CONFIG.GEMINI_API_KEY;
 var MODEL_NAME = API_CONFIG.MODEL_NAME || "gemini-3.5-flash"; // Bản ổn định, miễn phí, hỗ trợ Vision và Context lớn
